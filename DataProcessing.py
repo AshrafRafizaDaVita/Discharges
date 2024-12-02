@@ -175,3 +175,47 @@ def generate_deathData():
     df = df.drop(col_to_drop, axis=1)
 
     return df
+
+# Count monthly deaths
+def monthly_death_count(df):
+    country_df = df.groupby('Month')['MR No.'].count().reset_index(name="Count")
+    region_df = df.groupby(['Region', 'Month'])['MR No.'].count().reset_index(name="Count")
+    center_df = df.groupby(['Region', 'Primary Center', 'Month'])['MR No.'].count().reset_index(name="Count")
+
+    return country_df, region_df, center_df
+
+# Count deaths reason
+def monthly_death_reason(df):
+    ## COUNTRY COUNT ##
+    country_df = df.groupby(['Month', 'Death Category'])['MR No.'].count().reset_index(name="Count")
+
+    # Calculate total deaths for each month
+    total_counts = country_df.groupby('Month')['Count'].transform('sum')
+    
+    # Add a Percentage column
+    country_df['Percentage'] = np.round((country_df['Count'] / total_counts) * 100,2)
+
+
+    ## REGION COUNT ##
+    region_df = df.groupby(['Region','Month', 'Death Category'])['MR No.'].count().reset_index(name="Count")
+
+    # Calculate total deaths for each month
+    total_counts = region_df.groupby(['Region', 'Month'])['Count'].transform('sum')
+
+    # Add a Percentage column
+    region_df['Percentage'] = np.round((region_df['Count'] / total_counts) * 100, 2)
+
+
+    ## CENTER COUNT##
+    center_df = df.groupby(['Region', 'Primary Center','Month', 'Death Category'])['MR No.'].count().reset_index(name="Count")
+
+    # Calculate total deaths for each month
+    total_counts = center_df.groupby(['Region', 'Primary Center', 'Month'])['Count'].transform('sum')
+
+    # Add a Percentage column
+    center_df['Percentage'] = np.round((center_df['Count'] / total_counts) * 100, 2)
+
+    # Sort based on percentage
+    center_df = center_df.sort_values(by=['Region', 'Primary Center', 'Percentage'])
+
+    return country_df, region_df, center_df
