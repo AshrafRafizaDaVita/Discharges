@@ -142,18 +142,34 @@ def readSponsor():
 
     return df
 
+# Read Death Category
+def readDeath_category():
+    folderpath = os.path.join(DATA_FOLDER, 'Death Category') 
+    file = [file for file in os.listdir(folderpath)][0]
+
+    df = pd.read_excel(os.path.join(folderpath, file))
+    df = df[['MR No.', 'Death Category']]
+
+    return df
+
 # Combine all reports
-def combine_report():
+def generate_deathData():
     death = readMortality()
     attrition = readAttrition()
     sponsor = readSponsor()
+    death_category = readDeath_category()
 
     # MERGE
     df = pd.merge(death, attrition, on='MR No.', how='left')
     df = pd.merge(df, sponsor, on='MR No.', how='left')
+    df = pd.merge(df, death_category, on='MR No.', how='left')
 
-    # Relocate Remarks column
-    df.insert(7, "Physical Discharge Remarks", df.pop("Physical Discharge Remarks"))
+    # Relocate column
+    df.insert(0, "Region", df.pop("Region"))
+    df.insert(1, "Primary Center", df.pop("Primary Center"))
+    df.insert(7, "Death Time", df.pop("Death Time"))
+    df.insert(9, "Physical Discharge Remarks", df.pop("Physical Discharge Remarks"))
+    df.insert(10, "Death Category", df.pop("Death Category"))
 
     # Drop columns
     df = df.drop(col_to_drop, axis=1)
