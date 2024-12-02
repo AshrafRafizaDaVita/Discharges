@@ -152,7 +152,7 @@ def readDeath_category():
 
     return df
 
-# Combine all reports
+# Generate Death Data
 def generate_deathData():
     death = readMortality()
     attrition = readAttrition()
@@ -160,9 +160,9 @@ def generate_deathData():
     death_category = readDeath_category()
 
     # MERGE
-    df = pd.merge(death, attrition, on='MR No.', how='left')
-    df = pd.merge(df, sponsor, on='MR No.', how='left')
-    df = pd.merge(df, death_category, on='MR No.', how='left')
+    df = pd.merge(death, attrition, on='MR No.', how='left') # Death Report n Patient Attrition (Discharge Remarks)
+    df = pd.merge(df, sponsor, on='MR No.', how='left') # Merged n Sponsor
+    df = pd.merge(df, death_category, on='MR No.', how='left') # Merged n Death Category
 
     # Relocate column
     df.insert(0, "Region", df.pop("Region"))
