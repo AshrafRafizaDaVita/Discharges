@@ -40,7 +40,7 @@ def readAttrition():
 
     return df
 
-# Columns to drop
+# Columns to drop in Death Report
 col_to_drop = [
     'Duplicate MR No.',
     'Discharge Type',
@@ -94,11 +94,63 @@ def readMortality():
     # Sort the df
     df = df.sort_values(by='Week', ascending=False)
 
-    # READ PATIENT ATTRITION
+    return df
+
+# Read All Sponsor report to get patient sponsor
+def readSponsor():
+    folderpath = os.path.join(DATA_FOLDER, 'All Sponsor')
+    latest_csv_path = getLatesFile(folderpath)
+
+    df = pd.read_csv(latest_csv_path, skiprows = 1)
+
+    df = df[[
+        'MR No.',
+        'Sponsor Name1',
+        'Sponsor Name2',
+        'Sponsor Name3',
+        'Sponsor Name4',
+        'Sponsor Name5',
+        'Status',
+        'Item (Infusions)',
+        'Item (Haemodialysis)'
+    ]]
+
+    # Filter Status as Active
+    df = df[df['Status'] == 'Active']
+
+    # Item (Infusions) or Item (Haemodialysis) is HAEMODIALYSIS
+    df = df[(df['Item (Infusions)'] == 'HAEMODIALYSIS') | (df['Item (Haemodialysis)'] == 'HAEMODIALYSIS')]
+
+    # Create a prioritized column where null values in Sponsor Name1 are replaced by non-null values in the subsequent columns
+    df['Sponsor Name1'] = df[['Sponsor Name1', 'Sponsor Name2', 'Sponsor Name3', 'Sponsor Name4', 'Sponsor Name5']].bfill(axis=1)['Sponsor Name1']
+
+    # Drop columns
+    df = df.drop([
+        'Sponsor Name2', 
+        'Sponsor Name3', 
+        'Sponsor Name4', 
+        'Sponsor Name5',
+        'Item (Infusions)',
+        'Item (Haemodialysis)',
+        'Status'
+    ], axis=1)
+
+    # Rename col
+    df = df.rename({'Sponsor Name1' : 'Sponsor'}, axis=1)
+
+    # df = df.drop(df_col_drop, axis=1)
+
+    return df
+
+# Combine all reports
+def combine_report():
+    death = readMortality()
     attrition = readAttrition()
+    sponsor = readSponsor()
 
     # MERGE
-    df = pd.merge(df, attrition, on='MR No.', how='left')
+    df = pd.merge(death, attrition, on='MR No.', how='left')
+    df = pd.merge(df, sponsor, on='MR No.', how='left')
 
     # Relocate Remarks column
     df.insert(7, "Physical Discharge Remarks", df.pop("Physical Discharge Remarks"))
