@@ -176,6 +176,44 @@ def generate_deathData():
 
     return df
 
+# Generate Weekly data for international
+def genWeeklyDeath(df, weekNum):
+    df = df[df['Week'] == weekNum]
+
+    df = df[[
+        'Region',
+        'Primary Center',
+        'MR No.',
+        'Patient Name W/O Title',
+        'Sponsor',
+        'Death Date',
+        'Physical Discharge Remarks',
+        'Death Reason',
+        'Week'
+
+    ]]
+    # rename cols
+    df = df.rename({
+        'Primary Center' : 'Clinics',
+        'Death Date' : 'Date of Death',
+        'Physical Discharge Remarks' : 'Cause of Death',
+        'Death Reason' : 'Cause of Death Grouped'
+
+    }, axis=1)
+
+    # Add Treatment column
+    df['Treatment'] = 'Hemodialysis'
+    # Relocate column
+    df.insert(5, "Treatment", df.pop("Treatment"))
+
+    # Convert Death date to string format
+    df['Date of Death'] = df['Date of Death'].dt.strftime('%d/%m/%Y')
+
+    # Sort df
+    df = df.sort_values(by='Region')
+
+    return df
+
 # Count monthly deaths
 def monthly_death_count(df):
     country_df = df.groupby('Month')['MR No.'].count().reset_index(name="Count")
