@@ -209,10 +209,33 @@ def genWeeklyDeath(df, weekNum):
     # Convert Death date to string format
     df['Date of Death'] = df['Date of Death'].dt.strftime('%d/%m/%Y')
 
+    df['Cause of Death'] = df['Cause of Death'].str.capitalize()
+
     # Sort df
     df = df.sort_values(by='Region')
 
     return df
+
+# Check if deaths not report in Weekly International Report
+def weeklyIntlChecking():
+    folderpath = os.path.join(DATA_FOLDER, r'Weekly International Death Report\Raw csv') 
+    files = [file for file in os.listdir(folderpath) if file.endswith('.csv')]
+
+    report_array = []
+
+    if files:
+        for file in files:
+            file_path = os.path.join(folderpath, file)
+
+            df  = pd.read_csv(file_path)
+
+            report_array.append(df)
+    
+    df = pd.concat(report_array)
+
+    return df
+
+
 
 # Count monthly deaths
 def monthly_death_count(df):
@@ -257,3 +280,55 @@ def monthly_death_reason(df):
     center_df = center_df.sort_values(by=['Region', 'Primary Center', 'Percentage'])
 
     return country_df, region_df, center_df
+
+
+
+### HOSPITALIZATIONS ###
+
+# Read Hospitalization Report
+def readHospitalization():
+    # READ Hospitalization REPORT
+    folderpath = os.path.join(DATA_FOLDER, 'Hospitalizations Report')
+    latest_csv_path = getLatesFile(folderpath)
+
+    df = pd.read_csv(latest_csv_path, skiprows=2)
+
+    df['Region'] = df['Primary Center'].map(region_list)
+
+    df['Admission Date'] = pd.to_datetime(df['Admission Date'])
+    df['Discharge Date'] = pd.to_datetime(df['Discharge Date'])
+
+    # Calculate LOS, handling null discharge dates
+    df['LOS'] = np.where(df['Discharge Date'].isnull(), np.nan, (df['Discharge Date'] - df['Admission Date']).dt.days)
+
+    # Replace Remarks 'Others(please specity)' to 'Others'
+    df['Reason'] = df['Reason'].str.replace('Others(please specity)', 'Others')
+
+    return df
+
+# Generate all Hospitalization Data
+def gen_HospitalizationData():
+    hospitalization = readHospitalization()
+
+    return hospitalization
+
+# Generate  Hospitalization data for H&M
+def genHnM(df):
+
+    df = df[[
+        'Primary Center',
+        'MR No.',
+        'Admission Date',
+        'Discharge Date',
+        'LOS',
+        'Hospital Name',
+        'Reason',
+        'Remarks'
+    ]]
+
+    df['Admission Date'] = df['Admission Date'].dt.strftime('%d/%m/%Y')
+
+    return df
+
+
+
